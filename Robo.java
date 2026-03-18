@@ -13,89 +13,107 @@ public class Robo extends Robot {
 
 		{ // logica para peso
 			peso = 1;
-        }
+		}
 	}
 	
-    Mover[] pesos = { Mover.UP, Mover.DOWN, Mover.LEFT, Mover.RIGHT };
+    Mover[] movimentos = { Mover.UP, Mover.LEFT, Mover.RIGHT, Mover.DOWN };
     
-    int ultMovimento = -1, sorteios = 0;
+    Mover ultMovimento = null;
+    
+    int sorteios = 0;
+    
+    boolean sort = true;
 
     public void run() {
+    	
+    	setGunColor(Color.PINK);
+    	setRadarColor(Color.RED);
+
     	while (true) {
-        	
-    		setGunColor(Color.PINK);
-        	setBodyColor(
+
+    		setBodyColor(
             	new Color(
         			(int) (Math.random() * 255),
         			(int) (Math.random() * 255),
         			(int) (Math.random() * 255)
             	)
             );
-            setRadarColor(Color.RED);
 
-            int novoMovimento = sortearMovimento();
-
-            if (novoMovimento != ultMovimento) {
-                resetarPesos();
-                sorteios = 0;
-            }
-
-            pesos[novoMovimento].peso += 2;
-            
-            ultMovimento = novoMovimento;
-            
             sorteios++;
 
             if (sorteios >= 4) {
                 resetarPesos();
                 sorteios = 0;
+                sort = true;
             }
-            
-            switch (novoMovimento) {
 
-            	case 0: {
-	                ahead(150);
+            if (sort) {
+            	Mover novoMovimento = movimentos[sortearMovimento()];
+
+                if (novoMovimento != ultMovimento) {
+                    resetarPesos();
+                    sorteios = 0;
+                }
+
+                novoMovimento.peso += 2;
+
+                ultMovimento = novoMovimento;
+
+                sort = false;
+            }
+
+            switch (ultMovimento) {
+
+            	case UP: {
 	                turnRight(0);
+	                ahead(150);
 	            } break;
 
-	            case 1: {
+	            case LEFT: {
+	                turnLeft(90);
+	                ahead(150);
+            	} break;
+
+	            case RIGHT: {
+	                turnRight(90);
+	                ahead(150);
+            	} break;
+
+	            case DOWN: {
 	                back(150);
-	                turnRight(0);
 	            } break;
 
-	            case 2: {
-	                ahead(150);
-	                turnRight(45);
-	            } break;
+	            default: break;
 
-	            case 3: {
-	                ahead(150);
-	                turnLeft(45);
-	            } break;
-
-	        }
+            }
 
         }
+
     }
 
-    public void onHitWall(HitWallEvent e) { resetarPesos(); }
-    
+    public void onHitWall(HitWallEvent e) { sort = true; }
+
+    public void onHitByBullet(HitByBulletEvent e) { resetarPesos(); sort = true; }
+
     private int sortearMovimento() {
         int somaTotal = 0;
 
-        for (Mover p : pesos) somaTotal += p.peso;
+        for (Mover p : movimentos) {
+        	somaTotal += p.peso;
+        }
 
         double sorteio = Math.random() * somaTotal;
-
         double acumulado = 0;
 
-        for (int i = 0; i < pesos.length; i++) {
-            acumulado += pesos[i].peso;
-            if (sorteio <= acumulado) return i;
+        for (int i = 0; i < movimentos.length; i++) {
+            acumulado += movimentos[i].peso;
+            if (sorteio <= acumulado) {
+            	return i;
+            }
         }
         return 0;
     }
 
-    private void resetarPesos() { for (int i = 0; i < pesos.length; i++) pesos[i].peso = 1; }
+    private void resetarPesos() { for (int i = 0; i < movimentos.length; i++) movimentos[i].peso = 1; }
 
 }
