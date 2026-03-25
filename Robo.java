@@ -5,6 +5,7 @@ import java.awt.Color;
 import robocode.HitByBulletEvent;
 import robocode.HitWallEvent;
 import robocode.Robot;
+import robocode.ScannedRobotEvent;
 
 public class Robo extends Robot {
 
@@ -65,6 +66,14 @@ public class Robo extends Robot {
     // ------------------------------
     	// ------------------------------    
 
+
+    @Override
+    public void onScannedRobot(ScannedRobotEvent event) {
+    	if (event.getDistance() <= 200) fire(3);
+    	else {
+    		fire(1);
+    	}
+    }
 
     @Override
     public void onHitWall(HitWallEvent e) {
