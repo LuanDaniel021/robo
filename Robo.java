@@ -1,119 +1,176 @@
 package main;
 
-import robocode.*;
-
 import java.awt.Color;
 
+import robocode.HitByBulletEvent;
+import robocode.HitWallEvent;
+import robocode.Robot;
+
 public class Robo extends Robot {
-    
-	enum Mover {
-		UP, LEFT, RIGHT, DOWN;
 
-		int peso;
 
-		{ // logica para peso
-			peso = 1;
-		}
-	}
-	
-    Mover[] movimentos = { Mover.UP, Mover.LEFT, Mover.RIGHT, Mover.DOWN };
-    
-    Mover ultMovimento = null;
-    
-    int sorteios = 0;
-    
+	Movement[] movements = { Movement.UP, Movement.LEFT, Movement.RIGHT, Movement.DOWN };
+
+	Movement last_move = null;
+
+    int count_sort = 0;
+
     boolean sort = true;
 
-    public void run() {
-    	
-    	setGunColor(Color.PINK);
-    	setRadarColor(Color.RED);
 
-    	while (true) {
+    // ------------------------------
+ // ------------------------------
+    // ------------------------------
+    	// ------------------------------		
 
-    		setBodyColor(
-            	new Color(
-        			(int) (Math.random() * 255),
-        			(int) (Math.random() * 255),
-        			(int) (Math.random() * 255)
-            	)
-            );
 
-            sorteios++;
+    public void run() { Stages.map[0].accept(this); }
 
-            if (sorteios >= 4) {
-                resetarPesos();
-                sorteios = 0;
-                sort = true;
-            }
 
-            if (sort) {
-            	Mover novoMovimento = movimentos[sortearMovimento()];
+    // ------------------------------
+ // ------------------------------
+    // ------------------------------
+    	// ------------------------------
 
-                if (novoMovimento != ultMovimento) {
-                    resetarPesos();
-                    sorteios = 0;
-                }
 
-                novoMovimento.peso += 2;
+    private void resetWeights() { for (int i = 0; i < movements.length; i++) movements[i].weight = 1; }
 
-                ultMovimento = novoMovimento;
+    private int sortMovement() {
+        int soma = 0;
 
-                sort = false;
-            }
-
-            switch (ultMovimento) {
-
-            	case UP: {
-	                turnRight(0);
-	                ahead(150);
-	            } break;
-
-	            case LEFT: {
-	                turnLeft(90);
-	                ahead(150);
-            	} break;
-
-	            case RIGHT: {
-	                turnRight(90);
-	                ahead(150);
-            	} break;
-
-	            case DOWN: {
-	                back(150);
-	            } break;
-
-	            default: break;
-
-            }
-
+        for (Movement p : movements) {
+        	soma += p.weight;
         }
 
-    }
+        double sorteio = Math.random() * soma;
 
-    public void onHitWall(HitWallEvent e) { sort = true; }
-
-    public void onHitByBullet(HitByBulletEvent e) { resetarPesos(); sort = true; }
-
-    private int sortearMovimento() {
-        int somaTotal = 0;
-
-        for (Mover p : movimentos) {
-        	somaTotal += p.peso;
-        }
-
-        double sorteio = Math.random() * somaTotal;
         double acumulado = 0;
 
-        for (int i = 0; i < movimentos.length; i++) {
-            acumulado += movimentos[i].peso;
-            if (sorteio <= acumulado) {
+        for (int i = 0; i < movements.length; i++) {
+
+        	acumulado += movements[i].weight;
+
+        	if (sorteio <= acumulado) {
             	return i;
             }
+
         }
+
         return 0;
     }
 
-    private void resetarPesos() { for (int i = 0; i < movimentos.length; i++) movimentos[i].peso = 1; }
+
+    // ------------------------------
+ // ------------------------------
+    // ------------------------------
+    	// ------------------------------    
+
+
+    @Override
+    public void onHitWall(HitWallEvent e) {
+    	sort = true;
+    }
+
+    @Override
+    public void onHitByBullet(HitByBulletEvent e) {
+    	resetWeights();
+    	sort = true;
+    }    
+
+
+    // ------------------------------
+// ------------------------------
+	// ------------------------------
+       	// ------------------------------
+
+
+    private enum Movement {
+
+    	UP, LEFT, RIGHT, DOWN;
+
+		int weight;
+
+		{
+			weight = 1;
+		}
+
+	}
+
+    private static class Stages {
+
+    	static Consumer[] map = {
+    		Stages::random
+    	};
+
+    	static void random(Robo r) {
+
+    		r.setGunColor(Color.PINK);
+    		r.setRadarColor(Color.RED);
+
+    		while (true) {
+
+        		r.setBodyColor(
+        			new Color(
+                		(int) (Math.random() * 255),
+            			(int) (Math.random() * 255),
+            			(int) (Math.random() * 255)
+                	)
+                );
+
+                r.count_sort++;
+
+                if (r.count_sort >= 4) {
+                	r.resetWeights();
+                	r.count_sort = 0;
+                	r.sort = true;
+                }
+
+                if (r.sort) {
+                	Movement move = r.movements[r.sortMovement()];
+
+                    if (move != r.last_move) {
+                    	r.resetWeights();
+                    	r.count_sort = 0;
+                    }
+
+                    move.weight += 2;
+
+                    r.last_move = move;
+
+                    r.sort = false;
+                }
+
+                switch (r.last_move) {
+
+                	case UP: {
+                		r.turnRight(0);
+                		r.ahead(150);
+    	            } break;
+
+    	            case LEFT: {
+    	            	r.turnLeft(90);
+    	            	r.ahead(150);
+                	} break;
+
+    	            case RIGHT: {
+    	            	r.turnRight(90);
+    	            	r.ahead(150);
+                	} break;
+
+    	            case DOWN: {
+    	            	r.back(150);
+    	            } break;
+
+    	            default: break;
+
+                }
+
+            }
+
+    	}
+
+    }
+
+    @FunctionalInterface private interface Consumer { void accept(Robo robo); }
 
 }
