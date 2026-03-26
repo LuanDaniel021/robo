@@ -2,9 +2,12 @@ package main;
 
 import java.awt.Color;
 
+import javax.xml.stream.events.EndElement;
+
 import robocode.HitByBulletEvent;
 import robocode.HitWallEvent;
 import robocode.Robot;
+import robocode.RobotDeathEvent;
 import robocode.ScannedRobotEvent;
 
 public class Robo extends Robot {
@@ -16,8 +19,21 @@ public class Robo extends Robot {
 
     int count_sort = 0;
 
+    double enemyBearing;
+    double enemyDistance;
+    double enemyHeading;
+    double enemyVelocity;
+    boolean hasTarget = false;
     boolean sort = true;
+    
+    double targetDistance = 200;
+    int direction = 1;
+    
+    int current = 0;
 
+    {
+    	
+    }
 
     // ------------------------------
  // ------------------------------
@@ -25,7 +41,22 @@ public class Robo extends Robot {
     	// ------------------------------		
 
 
-    public void run() { Stages.map[0].accept(this); }
+    public void run() {
+    	setGunColor(Color.PINK); setRadarColor(Color.RED);
+    	
+		while (true) {
+    		setBodyColor(
+    			new Color(
+            		(int) (Math.random() * 255),
+        			(int) (Math.random() * 255),
+        			(int) (Math.random() * 255)
+            	)
+    		);
+    		
+    		Stages.map[current].accept(this);
+    	}
+
+    }
 
 
     // ------------------------------
@@ -68,24 +99,27 @@ public class Robo extends Robot {
 
 
     @Override
-    public void onScannedRobot(ScannedRobotEvent event) {
-    	if (event.getDistance() <= 200) fire(3);
-    	else {
-    		fire(1);
-    	}
+    public void onScannedRobot(ScannedRobotEvent e) {
+    	hasTarget = true;
+        enemyBearing = e.getBearing();
+        enemyDistance = e.getDistance();
+        enemyHeading = e.getHeading();
+        enemyVelocity = e.getVelocity();
     }
 
     @Override
     public void onHitWall(HitWallEvent e) {
     	sort = true;
+    	back(50);
     }
 
     @Override
-    public void onHitByBullet(HitByBulletEvent e) {
-    	resetWeights();
-    	sort = true;
-    }    
+    public void onHitByBullet(HitByBulletEvent e) { back(25); }    
 
+    @Override
+    public void onRobotDeath(RobotDeathEvent e) {
+        hasTarget = false;
+    }
 
     // ------------------------------
 // ------------------------------
@@ -108,73 +142,89 @@ public class Robo extends Robot {
     private static class Stages {
 
     	static Consumer[] map = {
+    		Stages::stalker,
     		Stages::random
     	};
 
     	static void random(Robo r) {
 
-    		r.setGunColor(Color.PINK);
-    		r.setRadarColor(Color.RED);
+    		if (r.hasTarget) {
+    			r.fire( r.enemyDistance > 200 ? 1 : 3 );
+    			r.hasTarget = false;
+    		}
 
-    		while (true) {
+            r.count_sort++;
 
-        		r.setBodyColor(
-        			new Color(
-                		(int) (Math.random() * 255),
-            			(int) (Math.random() * 255),
-            			(int) (Math.random() * 255)
-                	)
-                );
+            if (r.count_sort >= 6) {
+            	r.resetWeights();
+            	r.count_sort = 0;
+            	r.sort = true;
+            }
 
-                r.count_sort++;
+            if (r.sort) {
+            	Movement move = r.movements[r.sortMovement()];
 
-                if (r.count_sort >= 4) {
+                if (move != r.last_move) {
                 	r.resetWeights();
                 	r.count_sort = 0;
-                	r.sort = true;
                 }
 
-                if (r.sort) {
-                	Movement move = r.movements[r.sortMovement()];
+                move.weight += 2;
 
-                    if (move != r.last_move) {
-                    	r.resetWeights();
-                    	r.count_sort = 0;
-                    }
+                r.last_move = move;
 
-                    move.weight += 2;
+                r.sort = false;
+            }
 
-                    r.last_move = move;
+            switch (r.last_move) {
 
-                    r.sort = false;
-                }
+            	case UP: {
+            		r.ahead(50);
+	            } break;
 
-                switch (r.last_move) {
+	            case LEFT: {
+	            	r.turnLeft(45);
+	            	r.ahead(50);
+            	} break;
 
-                	case UP: {
-                		r.turnRight(0);
-                		r.ahead(150);
-    	            } break;
+	            case RIGHT: {
+	            	r.turnRight(45);
+	            	r.ahead(50);
+            	} break;
 
-    	            case LEFT: {
-    	            	r.turnLeft(90);
-    	            	r.ahead(150);
-                	} break;
-
-    	            case RIGHT: {
-    	            	r.turnRight(90);
-    	            	r.ahead(150);
-                	} break;
-
-    	            case DOWN: {
-    	            	r.back(150);
-    	            } break;
-
-    	            default: break;
-
-                }
+	            case DOWN: {
+	            	r.back(50);
+	            } break;
 
             }
+
+    	}
+    	
+    	static void stalker(Robo r) {
+
+    		if (r.hasTarget) {
+
+    			r.fire( r.enemyDistance > 200 ? 1 : 3 );
+
+    			r.hasTarget = false;
+
+    			r.turnRight(10 * r.direction);
+
+    			if (!r.hasTarget) {
+
+    				r.direction = r.direction < 1 ? 1 : -1;
+
+    			}
+
+    			if ( r.enemyDistance > 200  ) {
+
+    				r.ahead(50);	
+
+    			}
+
+    		}
+
+    		r.turnRight(10 * r.direction);
 
     	}
 
