@@ -200,7 +200,7 @@ public class Robo extends Robot {
 
     	}
     	
-    	static void stalker(Robo r) {
+    	static void tracer(Robo r) {
 
     		if (r.hasTarget) {
 
