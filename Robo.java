@@ -1,10 +1,12 @@
 package main;
 
 import java.awt.Color;
-
-import javax.xml.stream.events.EndElement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import robocode.HitByBulletEvent;
+import robocode.HitRobotEvent;
 import robocode.HitWallEvent;
 import robocode.Robot;
 import robocode.RobotDeathEvent;
@@ -13,37 +15,42 @@ import robocode.ScannedRobotEvent;
 public class Robo extends Robot {
 
 
-	Movement[] movements = { Movement.UP, Movement.LEFT, Movement.RIGHT, Movement.DOWN };
-
-	Movement last_move = null;
-
-    int count_sort = 0;
+	final List<Movement> movements = new ArrayList<>();
 
     double enemyBearing;
     double enemyDistance;
     double enemyHeading;
     double enemyVelocity;
-    boolean hasTarget = false;
-    boolean sort = true;
-    
-    double targetDistance = 200;
-    int direction = 1;
-    
-    int current = 0;
 
-    {
-    	
-    }
+    boolean onHitByBullet;
+    boolean onHitByRobot;
+    boolean onHitWall;
+    boolean hasTarget;
+
+    int direction;
+    int current;
+    int count;
+    int steps;
+
 
     // ------------------------------
  // ------------------------------
     // ------------------------------
-    	// ------------------------------		
+    	// ------------------------------
 
 
+    @Override
     public void run() {
     	setGunColor(Color.PINK); setRadarColor(Color.RED);
-    	
+
+    	movements.add(Movement.UP);
+		movements.add(Movement.LEFT);
+		movements.add(Movement.RIGHT);
+
+		current = Stage.TESTE;
+
+		direction = 1;
+
 		while (true) {
     		setBodyColor(
     			new Color(
@@ -52,8 +59,10 @@ public class Robo extends Robot {
         			(int) (Math.random() * 255)
             	)
     		);
-    		
-    		Stages.map[current].accept(this);
+
+    		Stage.map[current].accept(this);
+
+    		steps++;
     	}
 
     }
@@ -65,30 +74,56 @@ public class Robo extends Robot {
     	// ------------------------------
 
 
-    private void resetWeights() { for (int i = 0; i < movements.length; i++) movements[i].weight = 1; }
+    void reset() {
+    	movements.clear();
 
-    private int sortMovement() {
-        int soma = 0;
+    	enemyBearing = 0;
+    	enemyDistance = 0;
+    	enemyHeading = 0;
+    	enemyVelocity = 0;
+
+    	onHitByBullet = false;
+        onHitByRobot = false;
+        onHitWall = false;
+        hasTarget = false;
+
+        direction = -1;
+        current = -1;
+        count = 0;
+        steps = 0;
+    }
+
+    public Movement sort( List<Movement> movements ) {
+    	Movement move = movements.get(0);
+
+    	int sum = 0;
 
         for (Movement p : movements) {
-        	soma += p.weight;
+        	if (p.weight > move.weight ) {
+        		move = p;
+        	}
+        	sum += p.weight;
         }
 
-        double sorteio = Math.random() * soma;
+        if ( count < 5 ) count++;
+        else {
+        	Collections.shuffle( movements );
+        	move.weight = Movement.DEFAULT;
+        	count = 0;
+        } 
 
-        double acumulado = 0;
+        double sort = Math.random() * sum;
+    	double acc = 0;
 
-        for (int i = 0; i < movements.length; i++) {
-
-        	acumulado += movements[i].weight;
-
-        	if (sorteio <= acumulado) {
-            	return i;
+        for (int i = 0; i < movements.size(); i++) {
+        	acc += movements.get(i).weight;
+        	if (sort <= acc) {
+        		move = movements.get(i);
+        		break;
             }
-
         }
 
-        return 0;
+        return move;
     }
 
 
@@ -108,18 +143,25 @@ public class Robo extends Robot {
     }
 
     @Override
-    public void onHitWall(HitWallEvent e) {
-    	sort = true;
-    	back(50);
+    public void onHitByBullet(HitByBulletEvent e) {
+    	onHitByBullet = true;
+    }  
+
+    @Override
+    public void onHitRobot(HitRobotEvent event) {
+    	onHitByRobot = true;
     }
 
     @Override
-    public void onHitByBullet(HitByBulletEvent e) { back(25); }    
+    public void onHitWall(HitWallEvent e) {
+    	onHitWall = true;
+    }
 
     @Override
     public void onRobotDeath(RobotDeathEvent e) {
         hasTarget = false;
     }
+
 
     // ------------------------------
 // ------------------------------
@@ -127,92 +169,118 @@ public class Robo extends Robot {
        	// ------------------------------
 
 
-    private enum Movement {
+    enum Movement { UP, DOWN, LEFT, RIGHT; static int DEFAULT = 1; int weight = 1; }
 
-    	UP, LEFT, RIGHT, DOWN;
-
-		int weight;
-
-		{
-			weight = 1;
-		}
-
-	}
-
-    private static class Stages {
+    static class Stage {
 
     	static Consumer[] map = {
-    		Stages::stalker,
-    		Stages::random
+    		Stage::random,
+    		Stage::evade,
+    		Stage::tracker,
+    		Stage::tracker_C,
     	};
+
+    	static final int TESTE = map.length - 1;
+
+    	static final int RANDOM  = 0;
+    	static final int EVADE   = 1;
+    	static final int TRACKER = 2;
 
     	static void random(Robo r) {
 
-    		if (r.hasTarget) {
-    			r.fire( r.enemyDistance > 200 ? 1 : 3 );
+    		if ( r.hasTarget ) {
+    			r.turnGunRight( r.getHeading() - r.getGunHeading() + r.enemyBearing );
+
+    			r.fire( 1 );
+
     			r.hasTarget = false;
     		}
 
-            r.count_sort++;
+    		if ( r.onHitWall ) {
 
-            if (r.count_sort >= 6) {
-            	r.resetWeights();
-            	r.count_sort = 0;
-            	r.sort = true;
-            }
+    			r.back( 50 );
 
-            if (r.sort) {
-            	Movement move = r.movements[r.sortMovement()];
+    			if ( !r.onHitByBullet && !r.onHitByBullet ) {
 
-                if (move != r.last_move) {
-                	r.resetWeights();
-                	r.count_sort = 0;
-                }
+    				r.count = 5;
 
-                move.weight += 2;
+    			} 
 
-                r.last_move = move;
+    			r.onHitByBullet = false;
+        		r.onHitByRobot = false;
+    			r.onHitWall = false;
 
-                r.sort = false;
-            }
+    		}
 
-            switch (r.last_move) {
+    		switch ( r.sort( r.movements ) ) {
 
-            	case UP: {
-            		r.ahead(50);
-	            } break;
+    			case UP: {
+					r.ahead( 45 );
+				} break;
 
-	            case LEFT: {
-	            	r.turnLeft(45);
-	            	r.ahead(50);
-            	} break;
+				case LEFT: {
+					r.turnLeft( 45 );
+				} break;
 
-	            case RIGHT: {
-	            	r.turnRight(45);
-	            	r.ahead(50);
-            	} break;
+				case RIGHT: {
+					r.turnRight( 45 );
+				} break;
 
-	            case DOWN: {
-	            	r.back(50);
-	            } break;
+				default: break;
 
-            }
+    		}
 
     	}
-    	
-    	static void tracer(Robo r) {
 
-    		if (r.hasTarget) {
+    	static void evade(Robo r) {
 
-    			r.fire( r.enemyDistance > 200 ? 1 : 3 );
+    		if ( r.steps > 2 ) {
+
+            	r.current = 1;
+
+            	r.steps = 0;
+
+            	r.direction = -1;
+
+            	r.hasTarget = false;
+
+            	return;
+
+            }
+
+    		r.steps++;
+
+    		if ( r.onHitWall ) {
+
+    			r.turnLeft(20);
+
+    			r.onHitWall = false;
+
+    		} else {
+
+    			r.turnRight(25);	
+
+    			r.ahead(100);
+
+    		}
+
+    	}
+
+    	static void tracker(Robo r) {
+
+    		if ( r.hasTarget ) {
 
     			r.hasTarget = false;
 
-    			r.turnRight(10 * r.direction);
+    			r.turnRight( r.getHeading() * r.direction);
 
     			if (!r.hasTarget) {
 
     				r.direction = r.direction < 1 ? 1 : -1;
+
+    			} else {
+
+    				r.fire( r.enemyDistance > 200 ? 1 : 3 );
 
     			}
 
@@ -220,11 +288,97 @@ public class Robo extends Robot {
 
     				r.ahead(50);	
 
+    			} else {
+
+    				r.back(25);
+
+    			}
+
+    		}
+
+    		r.turnRight(15 * r.direction);
+
+    	}
+    	
+    	static void tracker_B(Robo r) {
+
+    		if ( r.hasTarget ) {
+
+    			r.hasTarget = false;
+
+    			r.direction = r.enemyBearing > 0 ? 1 : -1;
+
+    			if ( r.enemyDistance > 200  ) {
+
+    				r.ahead(50);	
+
+    			} else {
+
+    				r.back(25);
+
+    			}
+
+    			r.fire( r.enemyDistance > 200 ? 1 : 3 );
+
+    		}
+
+    		r.turnRight(10 * r.direction);
+
+    	}
+
+    	static void tracker_C(Robo r) {
+
+    		if ( r.hasTarget ) {
+
+    			r.hasTarget = false;
+
+    			r.direction = r.enemyBearing > 0 ? 1 : -1;
+
+    			double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing) + r.enemyVelocity;
+
+    			if ( r.enemyDistance < 300 ) {
+    				r.turnGunRight( diff );
+        			r.fire( r.enemyDistance > 150 ? 1 : 3 );
+        			r.turnGunLeft( diff );	
+    			}
+
+    			if ( r.enemyDistance > 200  ) {
+
+    				r.ahead(45);
+
+    			} else {
+
+    				r.back(25);
+
     			}
 
     		}
 
     		r.turnRight(10 * r.direction);
+
+    	}
+
+    	static void tracker_D(Robo r) {
+
+    		if ( r.hasTarget ) {
+
+    			r.hasTarget = false;
+
+    			r.direction = r.enemyBearing > 0 ? 1 : -1;
+
+    			double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing) + r.enemyVelocity;
+
+    			r.turnGunRight( diff );
+
+    			r.fire( r.enemyDistance > 150 ? 1 : 3 );
+
+    			r.ahead(50);
+
+    			r.turnGunLeft( diff );
+
+    		}
+
+    		r.turnRight(15 * r.direction);
 
     	}
 
