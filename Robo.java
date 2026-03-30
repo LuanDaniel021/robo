@@ -183,7 +183,7 @@ public class Robo extends Robot {
     
     @Override
     public void onDeath(DeathEvent event) {
-    	Comment.dead();
+    	Comment.death();
     }
     
     @Override
@@ -376,33 +376,11 @@ public class Robo extends Robot {
 				   "// não documentado por motivos óbvios",
 				   "// se chegou aqui, já deu ruim",
 			   },
-			   { // DEAD
-				   "Ok… isso não era pra acontecer.",
-				   "Quem deixou esse bot rodar?",
-				   "Rollback urgente.",
-				   "Claramente lag.",
-				   "Claramente ta bugado.",
-				   "Preciso de mais logs.",
-				   "Isso vai pro backlog.",
-				   "Teste falhou com sucesso.",
-				   "Alguém mexeu no código.",
-				   "Nota mental: não fazer isso.",
-				   "Stack overflow de vergonha.",
-				   "Po era zoeira.",
-				   "Não era pra produção!",
-				   "Vou fingir que foi estratégia.",
-				   "Isso não escalou bem.",
-				   "Inimigo usou hack, certeza.",
-				   "Quem escreveu isso?",
-				   "Ok, isso ficou feio.",
-				   "Time to refactor.",
-				   "Reiniciando dignidade...",
-			   },
 			   { // KILL
 				   "Menos outro.",
 				   "Obrigado pelo loot.",
 				   "Sistema inferior detectado.",
-				   "GG fácil.",
+				   "Achei fácil.",
 				   "Desinstalado com sucesso.",
 				   "Menos um processo rodando.",
 				   "Latency 0, precisão 100.",
@@ -419,6 +397,28 @@ public class Robo extends Robot {
 				   "Faltou um null check aí.",
 				   "Código limpo, inimigo não.",
 				   "Versão 1.0: dominante.",
+			   },
+			   { // DEATH
+				   "Ok… isso não era pra acontecer.",
+				   "Quem deixou esse bot rodar?",
+				   "Morri...",
+				   "Claramente lag.",
+				   "Ta bugado ali ó.",
+				   "Preciso de mais logs.",
+				   "Isso vai pro backlog.",
+				   "Teste falhou com sucesso.",
+				   "Alguém mexeu no código.",
+				   "Nota mental: não fazer isso.",
+				   "Stack overflow de vergonha.",
+				   "Po era zoeira.",
+				   "Chama o ADM!",
+				   "Vou fingir que foi estratégia.",
+				   "Isso não escalou bem.",
+				   "Inimigo usou hack, certeza.",
+				   "Quem escreveu isso?",
+				   "Ok, isso ficou feio.",
+				   "Pausa pro café.",
+				   "Reiniciando dignidade...",
 			   },
 			   { // VICTORY
 				   "GG EZ.",
@@ -445,16 +445,16 @@ public class Robo extends Robot {
 	   };
 
 	   final static int DEV     = 0;
-	   final static int DEAD    = 1;
-	   final static int KILL    = 2;
+	   final static int KILL    = 1;
+	   final static int DEATH   = 2;
 	   final static int VICTORY = 3;
 
 	   static String dev() {
 		   return println( random(DEV) );
 	   }
 
-	   static String dead() {
-		   return println( random(DEAD) );
+	   static String death() {
+		   return println( random(DEATH) );
 	   }
 
 	   static String kill() {
@@ -469,8 +469,8 @@ public class Robo extends Robot {
 		   return println( DEV, col );
 	   }
 
-	   static String dead( int col ) {
-		   return println( DEAD, col );
+	   static String death( int col ) {
+		   return println( DEATH, col );
 	   }
 
 	   static String kill( int col ) {
