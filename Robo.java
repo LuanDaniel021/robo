@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import robocode.DeathEvent;
 import robocode.HitByBulletEvent;
 import robocode.HitRobotEvent;
 import robocode.HitWallEvent;
@@ -72,10 +73,6 @@ public class Robo extends Robot {
             	)
     		);
 
-			if ( getEnergy() < 10 ) {
-				Comment.dead();
-			}
-			
     		Stage.map[current].accept(this);
 
     		steps++;
@@ -177,19 +174,23 @@ public class Robo extends Robot {
 
     @Override
     public void onRobotDeath(RobotDeathEvent e) {
-        if ( hasTarget && enemyName.equals( e.getName() ) ) { // fazendo agora 
-        	System.err.println(e.getName());
-        	
-        	hasTarget = false;
+        if ( enemyName.equals( e.getName() ) ) {
         	Comment.kill();
+        	enemyName = "";
+        	hasTarget = false;
         }
+    }
+    
+    @Override
+    public void onDeath(DeathEvent event) {
+    	Comment.dead();
     }
     
     @Override
     public void onWin(WinEvent event) {
     	Comment.victory();
     }
-
+    
 
     // ------------------------------
 // ------------------------------
@@ -380,14 +381,14 @@ public class Robo extends Robot {
 				   "Quem deixou esse bot rodar?",
 				   "Rollback urgente.",
 				   "Claramente lag.",
-				   "Foi feature, não bug.",
+				   "Claramente ta bugado.",
 				   "Preciso de mais logs.",
 				   "Isso vai pro backlog.",
 				   "Teste falhou com sucesso.",
 				   "Alguém mexeu no código.",
 				   "Nota mental: não fazer isso.",
 				   "Stack overflow de vergonha.",
-				   "Era só um zoera.",
+				   "Po era zoeira.",
 				   "Não era pra produção!",
 				   "Vou fingir que foi estratégia.",
 				   "Isso não escalou bem.",
