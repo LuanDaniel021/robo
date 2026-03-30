@@ -26,6 +26,7 @@ public class Robo extends Robot {
     boolean onHitByRobot;
     boolean onHitWall;
     boolean hasTarget;
+    boolean runing;
 
     int direction;
     int current;
@@ -47,12 +48,14 @@ public class Robo extends Robot {
 		movements.add(Movement.LEFT);
 		movements.add(Movement.RIGHT);
 
-		current = Stage.TESTE;
-
+		current = Stage.RAMFIRE;
 		direction = 1;
 
-		while (true) {
-    		setBodyColor(
+		runing = true;
+
+		while (runing) {
+
+			setBodyColor(
     			new Color(
             		(int) (Math.random() * 255),
         			(int) (Math.random() * 255),
@@ -76,17 +79,14 @@ public class Robo extends Robot {
 
     void reset() {
     	movements.clear();
-
     	enemyBearing = 0;
     	enemyDistance = 0;
     	enemyHeading = 0;
     	enemyVelocity = 0;
-
     	onHitByBullet = false;
         onHitByRobot = false;
         onHitWall = false;
         hasTarget = false;
-
         direction = -1;
         current = -1;
         count = 0;
@@ -96,6 +96,7 @@ public class Robo extends Robot {
     public Movement sort( List<Movement> movements ) {
     	Movement move = movements.get(0);
 
+    	double acc = 0;
     	int sum = 0;
 
         for (Movement p : movements) {
@@ -110,10 +111,9 @@ public class Robo extends Robot {
         	Collections.shuffle( movements );
         	move.weight = Movement.DEFAULT;
         	count = 0;
-        } 
+        }
 
         double sort = Math.random() * sum;
-    	double acc = 0;
 
         for (int i = 0; i < movements.size(); i++) {
         	acc += movements.get(i).weight;
@@ -130,7 +130,7 @@ public class Robo extends Robot {
     // ------------------------------
  // ------------------------------
     // ------------------------------
-    	// ------------------------------    
+    	// ------------------------------
 
 
     @Override
@@ -175,212 +175,151 @@ public class Robo extends Robot {
 
     	static Consumer[] map = {
     		Stage::random,
-    		Stage::evade,
+    		Stage::ramfire,
     		Stage::tracker,
-    		Stage::tracker_C,
+    		Stage::evade,
+    		Stage::teste,
     	};
 
     	static final int TESTE = map.length - 1;
 
     	static final int RANDOM  = 0;
-    	static final int EVADE   = 1;
+    	static final int RAMFIRE = 1;
     	static final int TRACKER = 2;
+    	static final int EVADE   = 3;
 
     	static void random(Robo r) {
+    		if ( r.steps > 25 ) r.current = RAMFIRE;
+    		else {
+    			if ( r.hasTarget ) {
+	    			r.turnGunRight( r.getHeading() - r.getGunHeading() + r.enemyBearing );
 
-    		if ( r.hasTarget ) {
-    			r.turnGunRight( r.getHeading() - r.getGunHeading() + r.enemyBearing );
+	    			r.fire( 1 );
 
-    			r.fire( 1 );
+	    			r.hasTarget = false;
+	    		}
 
-    			r.hasTarget = false;
+	    		if ( r.onHitWall ) {
+
+	    			if ( !r.onHitByRobot && !r.onHitByBullet ) {
+	    				r.count = 5;
+	    			}
+
+	    			r.back( 50 );
+
+	    			r.onHitByBullet = false;
+	        		r.onHitByRobot = false;
+	    			r.onHitWall = false;
+	    		}
+
+	    		switch ( r.sort( r.movements ) ) {
+
+	    			case UP: {
+						r.ahead( 45 );
+					} break;
+
+					case LEFT: {
+						r.turnLeft( 45 );
+					} break;
+
+					case RIGHT: {
+						r.turnRight( 45 );
+					} break;
+
+					default: break;
+
+	    		}
     		}
-
-    		if ( r.onHitWall ) {
-
-    			r.back( 50 );
-
-    			if ( !r.onHitByBullet && !r.onHitByBullet ) {
-
-    				r.count = 5;
-
-    			} 
-
-    			r.onHitByBullet = false;
-        		r.onHitByRobot = false;
-    			r.onHitWall = false;
-
-    		}
-
-    		switch ( r.sort( r.movements ) ) {
-
-    			case UP: {
-					r.ahead( 45 );
-				} break;
-
-				case LEFT: {
-					r.turnLeft( 45 );
-				} break;
-
-				case RIGHT: {
-					r.turnRight( 45 );
-				} break;
-
-				default: break;
-
-    		}
-
     	}
 
-    	static void evade(Robo r) {
+    	static void ramfire(Robo r) {
+    		if ( r.getOthers() < 6 ) r.current = TRACKER; 
+    		else {
+    			if ( r.onHitByRobot && r.hasTarget ) {
+    				r.onHitByRobot= false;
+    				r.hasTarget = false;
+    			}
 
-    		if ( r.steps > 2 ) {
+    			if ( r.hasTarget ) {
 
-            	r.current = 1;
+    				r.direction = r.enemyBearing > 0 ? 1 : -1;
 
-            	r.steps = 0;
+    				double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing);
 
-            	r.direction = -1;
+    				r.turnGunRight( diff );
 
-            	r.hasTarget = false;
+    				r.fire( 3 );
 
-            	return;
+    				if (r.enemyDistance > 50) {
+    					r.ahead(50);
+    				}
 
-            }
+    				r.turnGunLeft( diff );
 
-    		r.steps++;
+    				r.hasTarget = false;
 
-    		if ( r.onHitWall ) {
+        		}
 
-    			r.turnLeft(20);
+    			if ( !r.onHitByBullet ) r.turnRight(15 * r.direction);
+    			else {
 
-    			r.onHitWall = false;
+    				r.back( 45 );
 
-    		} else {
+        			r.onHitByBullet = false;
 
-    			r.turnRight(25);	
-
-    			r.ahead(100);
-
+        		}
     		}
-
     	}
 
     	static void tracker(Robo r) {
-
     		if ( r.hasTarget ) {
-
-    			r.hasTarget = false;
-
-    			r.turnRight( r.getHeading() * r.direction);
-
-    			if (!r.hasTarget) {
-
-    				r.direction = r.direction < 1 ? 1 : -1;
-
-    			} else {
-
-    				r.fire( r.enemyDistance > 200 ? 1 : 3 );
-
-    			}
-
-    			if ( r.enemyDistance > 200  ) {
-
-    				r.ahead(50);	
-
-    			} else {
-
-    				r.back(25);
-
-    			}
-
-    		}
-
-    		r.turnRight(15 * r.direction);
-
-    	}
-    	
-    	static void tracker_B(Robo r) {
-
-    		if ( r.hasTarget ) {
-
     			r.hasTarget = false;
 
     			r.direction = r.enemyBearing > 0 ? 1 : -1;
 
-    			if ( r.enemyDistance > 200  ) {
+    			double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing);
 
-    				r.ahead(50);	
-
-    			} else {
-
-    				r.back(25);
-
-    			}
-
-    			r.fire( r.enemyDistance > 200 ? 1 : 3 );
-
-    		}
-
-    		r.turnRight(10 * r.direction);
-
-    	}
-
-    	static void tracker_C(Robo r) {
-
-    		if ( r.hasTarget ) {
-
-    			r.hasTarget = false;
-
-    			r.direction = r.enemyBearing > 0 ? 1 : -1;
-
-    			double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing) + r.enemyVelocity;
-
-    			if ( r.enemyDistance < 300 ) {
+    			if ( r.enemyDistance > 300 ) r.turnRight( diff );
+    			else {
     				r.turnGunRight( diff );
-        			r.fire( r.enemyDistance > 150 ? 1 : 3 );
+
+    				if (r.hasTarget) {
+    					r.fire( r.enemyDistance > 200 ? 2 : 3 );
+        			}
+
         			r.turnGunLeft( diff );	
     			}
 
-    			if ( r.enemyDistance > 200  ) {
-
-    				r.ahead(45);
-
-    			} else {
-
+    			if ( r.enemyDistance > 200  ) r.ahead(45);
+    			else {
     				r.back(25);
-
     			}
-
-    		}
-
-    		r.turnRight(10 * r.direction);
-
-    	}
-
-    	static void tracker_D(Robo r) {
-
-    		if ( r.hasTarget ) {
-
+    			
     			r.hasTarget = false;
 
-    			r.direction = r.enemyBearing > 0 ? 1 : -1;
-
-    			double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing) + r.enemyVelocity;
-
-    			r.turnGunRight( diff );
-
-    			r.fire( r.enemyDistance > 150 ? 1 : 3 );
-
-    			r.ahead(50);
-
-    			r.turnGunLeft( diff );
-
     		}
-
-    		r.turnRight(15 * r.direction);
-
+    		r.turnRight(10 * r.direction);
     	}
+
+    	static void evade(Robo r) { // éééé
+    		if ( r.steps > 2 ) {
+            	r.current = 1;
+            	r.steps = 0;
+            	r.direction = -1;
+            	r.hasTarget = false;
+            	return;
+            }
+    		r.steps++;
+    		if ( r.onHitWall ) {
+    			r.turnLeft(20);
+    			r.onHitWall = false;
+    		} else {
+    			r.turnRight(25);	
+    			r.ahead(100);
+    		}
+    	}
+
+    	static void teste(Robo r) {}
 
     }
 
