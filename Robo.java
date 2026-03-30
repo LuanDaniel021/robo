@@ -11,12 +11,21 @@ import robocode.HitWallEvent;
 import robocode.Robot;
 import robocode.RobotDeathEvent;
 import robocode.ScannedRobotEvent;
+import robocode.WinEvent;
 
 public class Robo extends Robot {
 
 
+    // ------------------------------
+ // ------------------------------
+    // ------------------------------
+    	// ------------------------------
+
+
 	final List<Movement> movements = new ArrayList<>();
 
+	String enemyName;
+	
     double enemyBearing;
     double enemyDistance;
     double enemyHeading;
@@ -63,9 +72,17 @@ public class Robo extends Robot {
             	)
     		);
 
+			if ( getEnergy() < 10 ) {
+				Comment.dead();
+			}
+			
     		Stage.map[current].accept(this);
 
     		steps++;
+    		
+    		if ( Math.random() < 0.001 ) {
+				Comment.dev();
+			}
     	}
 
     }
@@ -140,6 +157,7 @@ public class Robo extends Robot {
         enemyDistance = e.getDistance();
         enemyHeading = e.getHeading();
         enemyVelocity = e.getVelocity();
+        enemyName = e.getName();
     }
 
     @Override
@@ -159,7 +177,17 @@ public class Robo extends Robot {
 
     @Override
     public void onRobotDeath(RobotDeathEvent e) {
-        hasTarget = false;
+        if ( hasTarget && enemyName.equals( e.getName() ) ) { // fazendo agora 
+        	System.err.println(e.getName());
+        	
+        	hasTarget = false;
+        	Comment.kill();
+        }
+    }
+    
+    @Override
+    public void onWin(WinEvent event) {
+    	Comment.victory();
     }
 
 
@@ -320,6 +348,146 @@ public class Robo extends Robot {
     	}
 
     	static void teste(Robo r) {}
+
+    }
+
+    static class Comment {
+
+	   private static final String[][] COMMENTS = {
+			   { // DEV
+				   "// isso funciona, não mexe",
+				   "// gambiarra temporária (permanente)",
+				   "// por que isso funciona?",
+				   "// não faço ideia do que estou fazendo",
+				   "// magia negra abaixo",
+				   "// não encoste nisso",
+				   "// se quebrar, culpa do usuário",
+				   "// funciona em produção, tá ótimo",
+				   "// otimizar depois",
+				   "// aqui mora o perigo",
+				   "// não sei, mas funciona",
+				   "// hack rápido, resolve depois",
+				   "// quem escreveu isso foi um gênio ou um louco",
+				   "// isso deveria ser ilegal",
+				   "// talvez isso ajude",
+				   "// remove isso e tudo quebra",
+				   "// precisa de mais café",
+				   "// não documentado por motivos óbvios",
+				   "// se chegou aqui, já deu ruim",
+			   },
+			   { // DEAD
+				   "Ok… isso não era pra acontecer.",
+				   "Quem deixou esse bot rodar?",
+				   "Rollback urgente.",
+				   "Claramente lag.",
+				   "Foi feature, não bug.",
+				   "Preciso de mais logs.",
+				   "Isso vai pro backlog.",
+				   "Teste falhou com sucesso.",
+				   "Alguém mexeu no código.",
+				   "Nota mental: não fazer isso.",
+				   "Stack overflow de vergonha.",
+				   "Era só um zoera.",
+				   "Não era pra produção!",
+				   "Vou fingir que foi estratégia.",
+				   "Isso não escalou bem.",
+				   "Inimigo usou hack, certeza.",
+				   "Quem escreveu isso?",
+				   "Ok, isso ficou feio.",
+				   "Time to refactor.",
+				   "Reiniciando dignidade...",
+			   },
+			   { // KILL
+				   "Menos outro.",
+				   "Obrigado pelo loot.",
+				   "Sistema inferior detectado.",
+				   "GG fácil.",
+				   "Desinstalado com sucesso.",
+				   "Menos um processo rodando.",
+				   "Latency 0, precisão 100.",
+				   "Você tentou.",
+				   "Execução concluída.",
+				   "Alvo neutralizado.",
+				   "Foi mal, era teste A/B.",
+				   "Bug corrigido.",
+				   "Stack trace: você morreu.",
+				   "Press F… ah não, já foi.",
+				   "Isso não foi pessoal!",
+				   "Caiu no if errado.",
+				   "Garbage collected.",
+				   "Faltou um null check aí.",
+				   "Código limpo, inimigo não.",
+				   "Versão 1.0: dominante.",
+			   },
+			   { // VICTORY
+				   "GG EZ.",
+				   "Apaga a luz que eu fui o último.",
+				   "Só tinha bot fácil?",
+				   "Nem aqueci ainda.",
+				   "Como que sai do tutorial?",
+				   "Skill issue de vocês.",
+				   "Fui nerfado e mesmo assim ganhei.",
+				   "Alguém chama um adulto.",
+				   "Meu código rodou, vocês não.",
+				   "Era pra ser difícil?",
+				   "Lagou pra vocês também?",
+				   "Instalei vitória.exe",
+				   "Respawn cancelado com sucesso.",
+				   "Clipa isso!",
+				   "Mais um dia normal no servidor.",
+				   "Se isso é desafio, eu sou compilador.",
+				   "Tá pago.",
+				   "Eu nem mirei direito.",
+				   "Top 1 sem esforço.",
+				   "Chora mais.",
+			   },
+	   };
+
+	   final static int DEV     = 0;
+	   final static int DEAD    = 1;
+	   final static int KILL    = 2;
+	   final static int VICTORY = 3;
+
+	   static String dev() {
+		   return println( random(DEV) );
+	   }
+
+	   static String dead() {
+		   return println( random(DEAD) );
+	   }
+
+	   static String kill() {
+		   return println( random(KILL) );
+	   }
+
+	   static String victory() {
+		   return println( random(VICTORY) );
+	   }
+
+	   static String dev( int col ) {
+		   return println( DEV, col );
+	   }
+
+	   static String dead( int col ) {
+		   return println( DEAD, col );
+	   }
+
+	   static String kill( int col ) {
+		   return println( KILL, col );
+	   }
+
+	   static String victory( int col ) {
+		   return println( KILL, col );
+	   }
+
+	   static String println( String str ) {
+		   System.out.println( str );
+		   return str;
+	   }
+
+	   static String println( int row, int col ) { return println( COMMENTS[row][col] ); }
+
+	   static String random( int idx ) { return COMMENTS[idx][(int)(Math.random() * (COMMENTS[idx].length - 1))]; }
 
     }
 
