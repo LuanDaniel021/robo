@@ -26,7 +26,7 @@ public class Robo extends Robot {
 	final List<Movement> movements = new ArrayList<>();
 
 	String enemyName;
-	
+
     double enemyBearing;
     double enemyDistance;
     double enemyHeading;
@@ -73,15 +73,18 @@ public class Robo extends Robot {
             	)
     		);
 
-    		Stage.map[current].accept(this);
+			if ( getEnergy() < 40 ) Stage.map[Stage.RAGEBOT].accept(this);
+    		else {
+    			Stage.map[current].accept(this);
 
-    		steps++;
-    		
-    		if ( Math.random() < 0.001 ) {
-				Comment.dev();
-			}
-    	}
+    			steps++;
 
+    			if ( Math.random() < 0.001 ) {
+    				Comment.dev();
+    			}
+    		}
+
+		}
     }
 
 
@@ -175,7 +178,7 @@ public class Robo extends Robot {
     @Override
     public void onRobotDeath(RobotDeathEvent e) {
         if ( enemyName.equals( e.getName() ) ) {
-        	Comment.kill();
+        	//Comment.kill();
         	enemyName = "";
         	hasTarget = false;
         }
@@ -206,6 +209,7 @@ public class Robo extends Robot {
     		Stage::random,
     		Stage::ramfire,
     		Stage::tracker,
+    		Stage::ragebot,
     		Stage::evade,
     		Stage::teste,
     	};
@@ -215,7 +219,8 @@ public class Robo extends Robot {
     	static final int RANDOM  = 0;
     	static final int RAMFIRE = 1;
     	static final int TRACKER = 2;
-    	static final int EVADE   = 3;
+    	static final int RAGEBOT = 3;
+    	static final int EVADE   = 4;
 
     	static void random(Robo r) {
     		if ( r.steps > 25 ) r.current = RAMFIRE;
@@ -264,11 +269,6 @@ public class Robo extends Robot {
     	static void ramfire(Robo r) {
     		if ( r.getOthers() < 6 ) r.current = TRACKER; 
     		else {
-    			if ( r.onHitByRobot && r.hasTarget ) {
-    				r.onHitByRobot= false;
-    				r.hasTarget = false;
-    			}
-
     			if ( r.hasTarget ) {
 
     				r.direction = r.enemyBearing > 0 ? 1 : -1;
@@ -280,7 +280,7 @@ public class Robo extends Robot {
     				r.fire( 3 );
 
     				if (r.enemyDistance > 50) {
-    					r.ahead(50);
+    					r.ahead(45);
     				}
 
     				r.turnGunLeft( diff );
@@ -289,14 +289,7 @@ public class Robo extends Robot {
 
         		}
 
-    			if ( !r.onHitByBullet ) r.turnRight(15 * r.direction);
-    			else {
-
-    				r.back( 45 );
-
-        			r.onHitByBullet = false;
-
-        		}
+    			r.turnRight(10 * r.direction);
     		}
     	}
 
@@ -310,16 +303,20 @@ public class Robo extends Robot {
 
     			if ( r.enemyDistance > 300 ) r.turnRight( diff );
     			else {
-    				r.turnGunRight( diff );
 
-    				if (r.hasTarget) {
-    					r.fire( r.enemyDistance > 200 ? 2 : 3 );
-        			}
+    				if (r.enemyDistance < 80) r.fire(3);
+    				else {
+    					r.turnGunRight( diff );
 
-        			r.turnGunLeft( diff );	
+        				if (r.hasTarget) {
+        					r.fire( r.enemyDistance > 200 ? 2 : 3 );
+            			}
+
+            			r.turnGunLeft( diff );	
+    				}
     			}
 
-    			if ( r.enemyDistance > 200  ) r.ahead(45);
+    			if ( r.enemyDistance > 200  ) r.ahead(40);
     			else {
     				r.back(25);
     			}
@@ -327,7 +324,29 @@ public class Robo extends Robot {
     			r.hasTarget = false;
 
     		}
-    		r.turnRight(10 * r.direction);
+    		r.turnRight(15 * r.direction);
+    	}
+
+    	static void ragebot(Robo r) {
+			if ( r.hasTarget ) {
+
+				r.direction = r.enemyBearing > 0 ? 1 : -1;
+
+				if (r.enemyDistance < 80) r.fire(3);
+
+				else {
+					r.ahead(40);
+
+					r.turnRight( r.getHeading() - r.getGunHeading() + r.enemyBearing );
+
+    				r.fire( 3 );
+				}
+
+				r.hasTarget = false;
+
+    		}
+			
+			r.turnRight(15 * r.direction);	
     	}
 
     	static void evade(Robo r) { // éééé
@@ -336,6 +355,7 @@ public class Robo extends Robot {
             	r.steps = 0;
             	r.direction = -1;
             	r.hasTarget = false;
+            	r.current = Stage.RAMFIRE;
             	return;
             }
     		r.steps++;
@@ -343,7 +363,7 @@ public class Robo extends Robot {
     			r.turnLeft(20);
     			r.onHitWall = false;
     		} else {
-    			r.turnRight(25);	
+    			r.turnRight(35);	
     			r.ahead(100);
     		}
     	}
