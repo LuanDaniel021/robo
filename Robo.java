@@ -74,8 +74,8 @@ public class Robo extends Robot {
         			(int) (Math.random() * 255)
             	)
     		);
-
-			if ( getEnergy() < 40 ) Stage.map[Stage.RAGEBOT].accept(this);
+			
+			if ( getEnergy() < 30 ) Stage.map[Stage.RAGEBOT].accept(this);
     		else {
     			Stage.map[current].accept(this);
 
@@ -224,7 +224,7 @@ public class Robo extends Robot {
     	static final int RAMFIRE   = 1;
     	static final int TRACKER   = 2;
     	static final int RAGEBOT   = 3;
-    	static final int TRECKFIRE = 4;    	
+    	static final int TRACKFIRE = 4;    	
     	static final int EVADE     = 5;
 
     	static void random(Robo r) {
@@ -272,38 +272,39 @@ public class Robo extends Robot {
     	}
 
     	static void ramfire(Robo r) {
-    		if ( r.getOthers() < 6 ) r.current = TRACKER;
+    		if ( r.getOthers() < 8 ) r.current = TRACKER;
     		else {
     			if ( !r.hasTarget ) r.turnRight(10 * r.direction);
     			else {
-    				if (r.enemyDistance > 300) r.hasTarget = false;
+    				if (r.enemyDistance > 400) {
+    					r.ahead(25);
+    					r.fire(2);
+    				}
     				else {
     					r.direction = r.enemyBearing > 0 ? 1 : -1;
 
-        				double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing);
-
         				if (r.enemyDistance < 80) r.fire(3);
-
 	    				else {
-	    					r.turnGunRight( diff );
+
+	    					double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing);
+
+	    					r.turnRight( diff );
 
 	        				r.fire( 3 );
 
 	        				r.ahead(45);
-
-	        				r.turnGunLeft( diff );
 	    				}
 
-        				r.hasTarget = false;
-
-        				r.scan();
     				}
+
+    				r.hasTarget = false;
         		}
     		}
+    		r.scan();
     	}
 
     	static void tracker(Robo r) {
-    		if ( r.getOthers() < 3 ) r.current = Stage.TRECKFIRE;
+    		if ( r.getEnergy() < 50 ) r.current = Stage.TRACKFIRE;
     		else {
 	    		if ( !r.hasTarget ) r.turnRight(15 * r.direction);
 	    		else {
@@ -311,16 +312,14 @@ public class Robo extends Robot {
 
 	    			double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing);
 
-	    			if ( r.enemyDistance > 400 ) r.turnRight( diff );
+	    			if ( r.enemyDistance > 300 ) r.turnRight( diff );
 	    			else {
 
 	    				if (r.enemyDistance < 80) r.fire(3);
 	    				else {
-	    					r.turnGunRight( diff );
+	    					r.turnRight( diff );
 
 	        				r.fire( r.enemyDistance > 200 ? 2 : 3 );
-
-	            			r.turnGunLeft( diff );	
 	    				}
 	    			}
 
@@ -328,33 +327,33 @@ public class Robo extends Robot {
 	    			else {
 	    				r.back(25);
 	    			}
-	    			
+
 	    			r.hasTarget = false;
 
+	    			r.scan();
 	    		}
 	    	}
+
     	}
 
     	static void ragebot(Robo r) {
 			if ( !r.hasTarget ) r.turnRight(15 * r.direction); 
 			else {
-
 				r.direction = r.enemyBearing > 0 ? 1 : -1;
 
 				if (r.enemyDistance < 80) r.fire(3);
-
 				else {
+
 					r.turnRight( r.getHeading() - r.getGunHeading() + r.enemyBearing );
 
-    				r.fire( 3 );
+    				r.fire( r.enemyDistance < 200 ? 3 : 2 );
 
-    				r.ahead(40);
+    				r.ahead(45);
+
+    				r.hasTarget = false;
 				}
-
-				r.hasTarget = false;
-
     		}
-
+			r.scan();
     	}
 
     	static void trackfire(Robo r) {
@@ -369,12 +368,12 @@ public class Robo extends Robot {
     				r.fire( 3 );
     				r.hasTarget = false;
     				r.scan();
-    			} while ( r.hasTarget && r.getEnergy() > 35);
+    			} while ( r.hasTarget && r.getEnergy() > 50);
 
     		}
     	}
 
-    	static void evade(Robo r) { // éééé
+    	static void evade(Robo r) { // ééééé
     		if ( r.steps > 2 ) {
             	r.current = 1;
             	r.steps = 0;
