@@ -14,7 +14,7 @@ import robocode.RobotDeathEvent;
 import robocode.ScannedRobotEvent;
 import robocode.WinEvent;
 
-public class Robo extends Robot {
+public class Gepeto extends Robot {
 
 
     // ------------------------------
