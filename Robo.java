@@ -340,17 +340,14 @@ public class Robo extends Robot {
 			else {
 				r.direction = r.enemyBearing > 0 ? 1 : -1;
 
-				if (r.enemyDistance < 80) r.fire(3);
-				else {
+				r.turnRight( r.getHeading() - r.getGunHeading() + r.enemyBearing );
 
-					r.turnRight( r.getHeading() - r.getGunHeading() + r.enemyBearing );
+    			r.fire( r.enemyDistance < 200 ? 3 : 2 );
 
-    				r.fire( r.enemyDistance < 200 ? 3 : 2 );
+    			r.ahead(45);
 
-    				r.ahead(45);
-
-    				r.hasTarget = false;
-				}
+    			r.hasTarget = false;
+				
     		}
 			r.scan();
     	}
