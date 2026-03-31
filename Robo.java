@@ -303,7 +303,7 @@ public class Robo extends Robot {
     	}
 
     	static void tracker(Robo r) {
-    		if ( r.getOthers() < 3 ) r.current = Stage.TRECKFIRE;
+    		if ( r.getOthers() < 3 ) r.current = Stage.TRACKFIRE;
     		else {
 	    		if ( !r.hasTarget ) r.turnRight(15 * r.direction);
 	    		else {
