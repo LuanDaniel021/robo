@@ -75,7 +75,7 @@ public class Robo extends Robot {
             	)
     		);
 			
-			if ( getEnergy() < 30 ) Stage.map[Stage.RAGEBOT].accept(this);
+			if ( getEnergy() < 35) Stage.map[Stage.RAGEBOT].accept(this);
     		else {
     			Stage.map[current].accept(this);
 
@@ -276,35 +276,31 @@ public class Robo extends Robot {
     		else {
     			if ( !r.hasTarget ) r.turnRight(10 * r.direction);
     			else {
-    				if (r.enemyDistance > 400) {
-    					r.ahead(25);
-    					r.fire(2);
-    				}
+					r.direction = r.enemyBearing > 0 ? 1 : -1;
+
+    				double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing);
+
+    				if (r.enemyDistance < 60) r.fire(3);
+
     				else {
-    					r.direction = r.enemyBearing > 0 ? 1 : -1;
+    					r.turnGunRight( diff );
 
-        				if (r.enemyDistance < 80) r.fire(3);
-	    				else {
+        				r.fire( 3 );
 
-	    					double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing);
+        				r.ahead(45);
 
-	    					r.turnRight( diff );
-
-	        				r.fire( 3 );
-
-	        				r.ahead(45);
-	    				}
-
+        				r.turnGunLeft( diff );
     				}
 
     				r.hasTarget = false;
+
+    				r.scan();
         		}
     		}
-    		r.scan();
     	}
 
     	static void tracker(Robo r) {
-    		if ( r.getEnergy() < 50 ) r.current = Stage.TRACKFIRE;
+    		if ( r.getOthers() < 4 ) r.current = Stage.TRACKFIRE;
     		else {
 	    		if ( !r.hasTarget ) r.turnRight(15 * r.direction);
 	    		else {
@@ -337,6 +333,9 @@ public class Robo extends Robot {
     	}
 
     	static void ragebot(Robo r) {
+    		if (r.getHeading() - r.getGunHeading() != 0) {
+    			r.turnGunRight( r.getHeading() );
+    		}
 			if ( !r.hasTarget ) r.turnRight(15 * r.direction); 
 			else {
 				r.direction = r.enemyBearing > 0 ? 1 : -1;
@@ -370,6 +369,10 @@ public class Robo extends Robot {
     				r.scan();
     			} while ( r.hasTarget && r.getEnergy() > 50);
 
+    		}
+    		if ( r.onHitByBullet ) {
+    			r.onHitByBullet = false;
+    			r.back(50);
     		}
     	}
 
