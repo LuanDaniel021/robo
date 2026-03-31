@@ -14,7 +14,7 @@ import robocode.RobotDeathEvent;
 import robocode.ScannedRobotEvent;
 import robocode.WinEvent;
 
-public class Gepeto extends Robot {
+public class Robo extends Robot {
 
 
     // ------------------------------
@@ -369,11 +369,7 @@ public class Gepeto extends Robot {
     				r.scan();
     			} while ( r.hasTarget && r.getEnergy() > 50);
 
-    		}
-    		if ( r.onHitByBullet ) {
-    			r.onHitByBullet = false;
-    			r.back(50);
-    		}
+			}
     	}
 
     	static void evade(Robo r) { // ééééé
