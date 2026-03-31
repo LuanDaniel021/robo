@@ -30,7 +30,6 @@ public class Robo extends Robot {
     double enemyBearing;
     double enemyDistance;
     double enemyHeading;
-    double enemyVelocity;
 
     boolean onHitByBullet;
     boolean onHitByRobot;
@@ -42,8 +41,6 @@ public class Robo extends Robot {
     int current;
     int count;
     int steps;
-
-    long time;
 
 
     // ------------------------------
@@ -96,22 +93,6 @@ public class Robo extends Robot {
     	// ------------------------------
 
 
-    void reset() {
-    	movements.clear();
-    	enemyBearing = 0;
-    	enemyDistance = 0;
-    	enemyHeading = 0;
-    	enemyVelocity = 0;
-    	onHitByBullet = false;
-        onHitByRobot = false;
-        onHitWall = false;
-        hasTarget = false;
-        direction = -1;
-        current = -1;
-        count = 0;
-        steps = 0;
-    }
-
     public Movement sort( List<Movement> movements ) {
     	Movement move = movements.get(0);
 
@@ -158,9 +139,7 @@ public class Robo extends Robot {
         enemyBearing = e.getBearing();
         enemyDistance = e.getDistance();
         enemyHeading = e.getHeading();
-        enemyVelocity = e.getVelocity();
         enemyName = e.getName();
-        time = e.getTime();
     }
 
     @Override
@@ -214,7 +193,6 @@ public class Robo extends Robot {
     		Stage::tracker,
     		Stage::ragebot,
     		Stage::trackfire,
-    		Stage::evade,
     		Stage::teste,
     	};
 
@@ -276,24 +254,25 @@ public class Robo extends Robot {
     		else {
     			if ( !r.hasTarget ) r.turnRight(10 * r.direction);
     			else {
-					r.direction = r.enemyBearing > 0 ? 1 : -1;
-
-    				double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing);
-
-    				if (r.enemyDistance < 60) r.fire(3);
-
+    				if ( r.enemyDistance > 300 ) r.turnRight(10 * r.direction);
     				else {
-    					r.turnGunRight( diff );
+    					r.direction = r.enemyBearing > 0 ? 1 : -1;
 
-        				r.fire( 3 );
+        				double diff = (r.getHeading() - r.getGunHeading() + r.enemyBearing);
 
-        				r.ahead(45);
+        				if (r.enemyDistance < 80) r.fire(3);
 
-        				r.turnGunLeft( diff );
+        				else {
+        					r.turnGunRight( diff );
+
+            				r.fire( 3 );
+
+            				r.ahead(45);
+
+            				r.turnGunLeft( diff );
+        				}
     				}
-
     				r.hasTarget = false;
-
     				r.scan();
         		}
     		}
@@ -325,7 +304,6 @@ public class Robo extends Robot {
 	    			}
 
 	    			r.hasTarget = false;
-
 	    			r.scan();
 	    		}
 	    	}
@@ -340,14 +318,17 @@ public class Robo extends Robot {
 			else {
 				r.direction = r.enemyBearing > 0 ? 1 : -1;
 
-				r.turnRight( r.getHeading() - r.getGunHeading() + r.enemyBearing );
+				if (r.enemyDistance < 50) r.fire(3);
+				else {
 
-    			r.fire( r.enemyDistance < 200 ? 3 : 2 );
+					r.turnRight( r.getHeading() - r.getGunHeading() + r.enemyBearing );
 
-    			r.ahead(45);
+    				r.fire( r.enemyDistance < 200 ? 3 : 2 );
 
-    			r.hasTarget = false;
-				
+    				r.ahead(45);
+
+    				r.hasTarget = false;
+				}
     		}
 			r.scan();
     	}
@@ -366,25 +347,6 @@ public class Robo extends Robot {
     				r.scan();
     			} while ( r.hasTarget && r.getEnergy() > 50);
 
-			}
-    	}
-
-    	static void evade(Robo r) { // ééééé
-    		if ( r.steps > 2 ) {
-            	r.current = 1;
-            	r.steps = 0;
-            	r.direction = -1;
-            	r.hasTarget = false;
-            	r.current = Stage.RAMFIRE;
-            	return;
-            }
-    		r.steps++;
-    		if ( r.onHitWall ) {
-    			r.turnLeft(20);
-    			r.onHitWall = false;
-    		} else {
-    			r.turnRight(35);	
-    			r.ahead(100);
     		}
     	}
 
